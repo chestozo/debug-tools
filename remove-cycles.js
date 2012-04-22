@@ -22,13 +22,17 @@ Preformatter.prototype.processObject = function(donor, receiver, path) {
     // Save current object in cache.
     this.cache(donor, path);
 
-    // Handle objects.
     for (var prop in donor) {
         if (!donor.hasOwnProperty(prop)) {
             continue;
         }
 
         val = donor[prop];
+
+        if (typeof val === 'function') {
+            continue;
+        }
+
         if (typeof val === 'object') {
             // Objects are checked for cyclic links.
             link = this.getLinkObject(val);
@@ -67,9 +71,13 @@ Preformatter.prototype.processArray = function(donor, receiver, path) {
     // Save current object in cache.
     this.cache(donor, path);
 
-    // Handle objects.
     for (var i = 0; i < donor.length; i++) {
         val = donor[i];
+
+        if (typeof val === 'function') {
+            continue;
+        }
+
         if (typeof val === 'object') {
             // Objects are checked for cyclic links.
             link = this.getLinkObject(val);

@@ -57,3 +57,15 @@ test('Test case 3', function() {
 
     check(from, to);
 });
+
+test('Test case 4: skip functions', function() {
+    var from = {
+        a: function() {},
+        b: [ function() {} ]
+    };
+    var to = {
+        b: []
+    };
+
+    check(from, to);
+});
