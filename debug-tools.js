@@ -132,7 +132,9 @@ Preformatter.prototype.cloneArray = function(ar) {
 
 // Export.
 window.JSON.stringify2 = function(obj) {
-    return JSON.stringify(new Preformatter().format(obj));
+    var args = Array.prototype.splice.call(arguments, 0);
+    args[0] = new Preformatter().format(obj);
+    return JSON.stringify.apply(JSON, args);
 };
 
 }(jQuery));
