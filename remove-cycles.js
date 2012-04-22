@@ -5,7 +5,7 @@ var Preformatter = function() {
 };
 
 Preformatter.prototype.format = function(obj) {
-    this.process(obj, this.result, [ '.' ]);
+    this.processObject(obj, this.result, [ '.' ]);
     return this.result;
 };
 
@@ -15,14 +15,19 @@ Preformatter.prototype.format = function(obj) {
  * @param {Object} reciever Object to place result properties.
  * @param {Array.<string>} path Current path to property.
  */
-Preformatter.prototype.process = function(donor, receiver, path) {
+Preformatter.prototype.processObject = function(donor, receiver, path) {
     var val;
     var link;
 
     // Save current object in cache.
     this.cache(donor, path);
 
+    // Handle objects.
     for (var prop in donor) {
+        if (!donor.hasOwnProperty(prop)) {
+            continue;
+        }
+
         val = donor[prop];
         if (typeof val === 'object') {
             // Objects are checked for cyclic links.
@@ -32,12 +37,60 @@ Preformatter.prototype.process = function(donor, receiver, path) {
                 receiver[prop] = link;
             } else {
                 path.push(prop);
-                this.process(val, (receiver[prop] = {}), path);
+                if (Array.isArray(val)) {
+                    this.processArray(val, (receiver[prop] = []), path);
+                }
+                else {
+                    this.processObject(val, (receiver[prop] = {}), path);
+                }
+
                 path.pop();
             }
         } else {
             // Value types are added as is.
             receiver[prop] = val;
+        }
+    }
+};
+
+/**
+ * Replaces all cyclic links to their string links.
+ * @param {Array} donor Array to get items of.
+ * @param {Array} reciever Array to place result items.
+ * @param {Array.<string>} path Current path to property.
+ */
+Preformatter.prototype.processArray = function(donor, receiver, path) {
+    var val;
+    var link;
+    var last;
+
+    // Save current object in cache.
+    this.cache(donor, path);
+
+    // Handle objects.
+    for (var i = 0; i < donor.length; i++) {
+        val = donor[i];
+        if (typeof val === 'object') {
+            // Objects are checked for cyclic links.
+            link = this.getLinkObject(val);
+            if (link) {
+                // Place a link.
+                receiver[i] = link;
+            } else {
+                last = path.pop();
+                path.push(last + '[' + i + ']'); // User item index as a key
+                if (Array.isArray(val)) {
+                    this.processArray(val, (receiver[i] = []), path);
+                }
+                else {
+                    this.processObject(val, (receiver[i] = {}), path);
+                }
+                path.pop();
+                path.push(last);
+            }
+        } else {
+            // Value types are added as is.
+            receiver[i] = val;
         }
     }
 };
@@ -56,7 +109,11 @@ Preformatter.prototype.getLinkObject = function(obj) {
 };
 
 Preformatter.prototype.cache = function(obj, path) {
-    this.hash[path.join('.')] = obj;
+    var key = path.join('.');
+    if (key.length > 1) {
+        key = key.substring(1);
+    }
+    this.hash[key] = obj;
 };
 
 Preformatter.prototype.cloneArray = function(ar) {
