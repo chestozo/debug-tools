@@ -1,3 +1,5 @@
+;(function($){
+
 var Preformatter = function() {
     this.hash = {}; // Objects hash
     this.result = {};
@@ -132,3 +134,5 @@ Preformatter.prototype.cloneArray = function(ar) {
 window.JSON.stringify2 = function(obj) {
     return JSON.stringify(new Preformatter().format(obj));
 };
+
+}(jQuery));
